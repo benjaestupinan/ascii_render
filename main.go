@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	_ "image/png"
+	_ "image/jpeg"
 	"os"
 	"strconv"
 
