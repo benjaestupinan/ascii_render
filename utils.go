@@ -166,11 +166,12 @@ func VideoToAscii(video_path string, resolution int) {
 		return
 	}
 
+	fmt.Print("\033[H\033[2J")
 	for video.Read() {
-		fmt.Print("\033[H\033[2J")
 		frame_nrgba := convertRGBAtoNRGBA(frame)
 		gray_in_mem_img := ImgToGreyScale(frame_nrgba)
-		println(GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution))
+		ascii := GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution)
+	 	fmt.Println("\033[H", ascii)
 		time.Sleep(time.Duration(float64(time.Second) / video.FPS()))
 	}
 }
