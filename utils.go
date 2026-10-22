@@ -1,12 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+	"os"
+	"time"
+
+	// "time"
+
+	vidio "github.com/AlexEidt/Vidio"
 )
 
 const brightness_ascii string = ".'`^,:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+
+func convertRGBAtoNRGBA(src *image.RGBA) *image.NRGBA {
+    bounds := src.Bounds()
+    dst := image.NewNRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
+    draw.Draw(dst, dst.Bounds(), src, bounds.Min, draw.Src)
+    return dst
+}
 
 func ImgToGreyScale(img *image.NRGBA) *image.NRGBA {
 	// Changes colors to be grayscale by setting red, green and blue values to the average
@@ -103,4 +118,59 @@ func GrayScaleToAscii(img *image.NRGBA, ascii string, width int) string {
 	}
 
 	return ret_ascii
+}
+
+func ImageToAscii(image_path string, resolution int) {
+
+	reader, err := os.Open(image_path)
+	if err != nil {
+		println("error abriendo el archivo", err)
+		return
+	}
+	defer reader.Close()
+	img, _, err := image.Decode(reader)
+	if err != nil {
+		fmt.Println("error decodificando imagen:", err)
+		return
+	}
+
+	in_mem_img := image.NewNRGBA(img.Bounds())
+	draw.Draw(in_mem_img, img.Bounds(), img, image.Point{}, draw.Src)
+	gray_in_mem_img := ImgToGreyScale(in_mem_img)
+
+	// ordered ascii brightness string
+	println(GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution))
+}
+
+func VideoToAscii(video_path string, resolution int) {
+	video, err := vidio.NewVideo(video_path)
+	if err != nil {
+		fmt.Println("error creando video", err)
+		return
+	}
+	defer video.Close()
+
+	
+	w, h := video.Width(), video.Height()
+	switch video.MetaData()["side_datum/display_matrix:rotation"] {
+	case "90", "-90", "270", "-270":
+		w, h = h, w
+	}
+
+	frame := image.NewRGBA(image.Rect(0, 0, w, h))
+
+
+	err = video.SetFrameBuffer(frame.Pix)
+	if err != nil {
+		fmt.Println("error setteando el framebuffer", err)
+		return
+	}
+
+	for video.Read() {
+		fmt.Print("\033[H\033[2J")
+		frame_nrgba := convertRGBAtoNRGBA(frame)
+		gray_in_mem_img := ImgToGreyScale(frame_nrgba)
+		println(GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution))
+		time.Sleep(time.Duration(float64(time.Second) / video.FPS()))
+	}
 }
