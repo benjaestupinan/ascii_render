@@ -9,18 +9,16 @@ import (
 	"os"
 	"time"
 
-	// "time"
-
 	vidio "github.com/AlexEidt/Vidio"
 )
 
 const brightness_ascii string = ".'`^,:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 
 func convertRGBAtoNRGBA(src *image.RGBA) *image.NRGBA {
-    bounds := src.Bounds()
-    dst := image.NewNRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-    draw.Draw(dst, dst.Bounds(), src, bounds.Min, draw.Src)
-    return dst
+	bounds := src.Bounds()
+	dst := image.NewNRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
+	draw.Draw(dst, dst.Bounds(), src, bounds.Min, draw.Src)
+	return dst
 }
 
 func ImgToGreyScale(img *image.NRGBA) *image.NRGBA {
@@ -62,7 +60,7 @@ func mapColorToAscii(col uint, ascii string) byte {
 
 	length := len(ascii)
 
-	index := (col * uint(length)) / 255
+	index := (col * uint(length)-1) / 255
 
 	return ascii[index]
 }
@@ -87,6 +85,13 @@ func GrayScaleToAscii(img *image.NRGBA, ascii string, width int) string {
 
 			start_y := int(float64(i) * block_h)
 			end_y := int(float64(i+1) * block_h)
+
+			if end_x <= start_x {
+				end_x = start_x + 1
+			}
+			if end_y <= start_y {
+				end_y = start_y + 1
+			}
 
 			// corregir out-of-bounds
 			if end_x > img_w {
@@ -150,7 +155,6 @@ func VideoToAscii(video_path string, resolution int) {
 	}
 	defer video.Close()
 
-	
 	w, h := video.Width(), video.Height()
 	switch video.MetaData()["side_datum/display_matrix:rotation"] {
 	case "90", "-90", "270", "-270":
@@ -158,7 +162,6 @@ func VideoToAscii(video_path string, resolution int) {
 	}
 
 	frame := image.NewRGBA(image.Rect(0, 0, w, h))
-
 
 	err = video.SetFrameBuffer(frame.Pix)
 	if err != nil {
@@ -171,7 +174,7 @@ func VideoToAscii(video_path string, resolution int) {
 		frame_nrgba := convertRGBAtoNRGBA(frame)
 		gray_in_mem_img := ImgToGreyScale(frame_nrgba)
 		ascii := GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution)
-	 	fmt.Println("\033[H", ascii)
+		fmt.Println("\033[H", ascii)
 		time.Sleep(time.Duration(float64(time.Second) / video.FPS()))
 	}
 }
