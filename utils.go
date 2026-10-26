@@ -15,19 +15,12 @@ import (
 
 const brightness_ascii string = ".'`^,:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 
-func convertRGBAtoNRGBA(src *image.RGBA) *image.NRGBA {
-	bounds := src.Bounds()
-	dst := image.NewNRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
-	draw.Draw(dst, dst.Bounds(), src, bounds.Min, draw.Src)
-	return dst
-}
-
 func ImgToGreyScale(img *image.NRGBA) *image.NRGBA {
 	// Changes colors to be grayscale by setting red, green and blue values to the average
 	// of this 3 values (255, 100, 200) -> (185, 185, 185)
-	var newImg *image.NRGBA = image.NewNRGBA(img.Rect)
-	var h int = img.Rect.Dy()
-	var w int = img.Rect.Dx()
+	newImg := image.NewNRGBA(img.Rect)
+	h := img.Rect.Dy()
+	w := img.Rect.Dx()
 
 	for i := 0; i < h; i++ {
 
@@ -40,7 +33,7 @@ func ImgToGreyScale(img *image.NRGBA) *image.NRGBA {
 			g := img.Pix[jSrc+1]
 			b := img.Pix[jSrc+2]
 
-			var gray uint8 = uint8((int(r) + int(g) + int(b)) / 3)
+			gray := uint8((int(r) + int(g) + int(b)) / 3)
 
 			newImg.Pix[jDst] = gray
 			newImg.Pix[jDst+1] = gray
