@@ -60,7 +60,7 @@ func mapColorToAscii(col uint, ascii string) byte {
 
 	length := len(ascii)
 
-	index := (col * uint(length)-1) / 255
+	index := ( (int(col) * length - 1) / 255 )
 
 	return ascii[index]
 }
@@ -147,6 +147,25 @@ func ImageToAscii(image_path string, resolution int) {
 	println(GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution))
 }
 
+func setFrameRoutine(video *vidio.Video, frame_buffers_list []*image.RGBA, ready_channel chan int, frames_channel chan int) {
+	// cerrar el channel le avisa a VideoToAscii que no vienen más frames
+	defer close(frames_channel)
+
+	// espera un buffer libre, lee el siguiente frame y lo manda
+	for frame_buffer_index := range ready_channel {
+		err := video.SetFrameBuffer(frame_buffers_list[frame_buffer_index].Pix)
+		if err != nil {
+			fmt.Println("error setteando el framebuffer", err)
+			return
+		}
+
+		if !video.Read() {
+			return
+		}
+		frames_channel <- frame_buffer_index
+	}
+}
+
 func VideoToAscii(video_path string, resolution int) {
 	video, err := vidio.NewVideo(video_path)
 	if err != nil {
@@ -161,20 +180,38 @@ func VideoToAscii(video_path string, resolution int) {
 		w, h = h, w
 	}
 
-	frame := image.NewRGBA(image.Rect(0, 0, w, h))
+	const N int = 5
 
-	err = video.SetFrameBuffer(frame.Pix)
-	if err != nil {
-		fmt.Println("error setteando el framebuffer", err)
-		return
+
+	frames_list := make([]*image.RGBA, N)
+	frames_channel := make(chan int, N)
+	ready_channel := make(chan int, N)
+	for i := 0; i < N; i++ {
+		frames_list[i] = image.NewRGBA(image.Rect(0, 0, w, h))
 	}
 
+	// al principio todos los buffers están libres
+	for i := 0; i < N; i++ {
+		ready_channel <- i
+	}
+
+	// una sola goroutine es dueña de `video`
+	go setFrameRoutine(video, frames_list, ready_channel, frames_channel)
+
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / video.FPS()))
+	defer ticker.Stop()
+
 	fmt.Print("\033[H\033[2J")
-	for video.Read() {
-		frame_nrgba := convertRGBAtoNRGBA(frame)
+	for next_frame_index := range frames_channel {
+		next_frame := frames_list[next_frame_index]
+		// TODO: pasar la resoponsalibidad de la conversion a las goroutines
+		frame_nrgba := convertRGBAtoNRGBA(next_frame)
+		// frame_nrgba es una copia, así que el buffer ya se puede reutilizar
+		ready_channel <- next_frame_index
+
 		gray_in_mem_img := ImgToGreyScale(frame_nrgba)
 		ascii := GrayScaleToAscii(gray_in_mem_img, brightness_ascii, resolution)
-		fmt.Println("\033[H", ascii)
-		time.Sleep(time.Duration(float64(time.Second) / video.FPS()))
+		<-ticker.C
+		fmt.Print("\033[H" + ascii)
 	}
 }
