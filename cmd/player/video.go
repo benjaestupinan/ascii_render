@@ -3,33 +3,11 @@ package main
 import (
 	"fmt"
 	"image"
-	_ "image/jpeg"
-	_ "image/png"
-	"os"
 	"time"
 
 	vidio "github.com/AlexEidt/Vidio"
 	"github.com/benjaestupinan/ascii_render/render"
 )
-
-func ImageToAscii(image_path string, resolution int) {
-
-	reader, err := os.Open(image_path)
-	if err != nil {
-		println("error abriendo el archivo", err)
-		return
-	}
-	defer reader.Close()
-	img, _, err := image.Decode(reader)
-	if err != nil {
-		fmt.Println("error decodificando imagen:", err)
-		return
-	}
-
-	frame := render.FromImage(img, img.Bounds().Dx())
-	// ordered ascii brightness string
-	fmt.Print(frame.String())
-}
 
 func setFrameRoutine(video *vidio.Video, frame_buffers_list []*image.NRGBA, ready_channel chan int, frames_channel chan int) {
 	// cerrar el channel le avisa a VideoToAscii que no vienen más frames
@@ -50,7 +28,7 @@ func setFrameRoutine(video *vidio.Video, frame_buffers_list []*image.NRGBA, read
 	}
 }
 
-func VideoToAscii(video_path string, resolution int) {
+func videoToAscii(video_path string, resolution int) {
 	video, err := vidio.NewVideo(video_path)
 	if err != nil {
 		fmt.Println("error creando video", err)
@@ -65,7 +43,6 @@ func VideoToAscii(video_path string, resolution int) {
 	}
 
 	const N int = 5
-
 
 	frames_list := make([]*image.NRGBA, N)
 	frames_channel := make(chan int, N)

@@ -13,7 +13,6 @@ func main() {
 		return
 	}
 
-
 	res_s := os.Args[2]
 	resolution, err := strconv.Atoi(res_s)
 	if err != nil {
@@ -24,11 +23,11 @@ func main() {
 	file_path := os.Args[1]
 	switch true {
 	case strings.HasSuffix(file_path, ".png"):
-		ImageToAscii(file_path, resolution)
+		imageToAscii(file_path, resolution)
 	case strings.HasSuffix(file_path, ".jpeg"):
-		ImageToAscii(file_path, resolution)
+		imageToAscii(file_path, resolution)
 	case strings.HasSuffix(file_path, ".mp4"):
-		VideoToAscii(file_path, resolution)
+		videoToAscii(file_path, resolution)
 	}
 
 }
