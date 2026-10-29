@@ -11,7 +11,7 @@ import (
 const ramp = ".'`^,:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 
 func TestNewCreaUnFrameNegro(t *testing.T) {
-	f := render.New(4, 3)
+	f := render.NewFrame(4, 3)
 
 	if f.Width != 4 || f.Height != 3 {
 		t.Fatalf("tamaño = %dx%d, se esperaba 4x3", f.Width, f.Height)
@@ -28,7 +28,7 @@ func TestNewCreaUnFrameNegro(t *testing.T) {
 
 // Light se guarda fila por fila: la celda (x, y) está en Light[y*Width + x]
 func TestSetEscribeFilaPorFila(t *testing.T) {
-	f := render.New(4, 3)
+	f := render.NewFrame(4, 3)
 	f.Set(1, 2, 0.5)
 
 	if got := f.Light[2*4+1]; got != 0.5 {
@@ -37,7 +37,7 @@ func TestSetEscribeFilaPorFila(t *testing.T) {
 }
 
 func TestSetLimitaElBrilloEntre0y1(t *testing.T) {
-	f := render.New(2, 1)
+	f := render.NewFrame(2, 1)
 	f.Set(0, 0, 1.7)
 	f.Set(1, 0, -0.3)
 
@@ -52,7 +52,7 @@ func TestSetLimitaElBrilloEntre0y1(t *testing.T) {
 // El rasterizador va a dibujar triángulos que se salen de la pantalla,
 // así que escribir fuera del frame tiene que ignorarse sin hacer panic.
 func TestSetFueraDelFrameSeIgnora(t *testing.T) {
-	f := render.New(4, 3)
+	f := render.NewFrame(4, 3)
 	// (-1, 1) y (4, 1) caen dentro de Light si solo se revisa el índice
 	fuera := [][2]int{{-1, 0}, {0, -1}, {4, 0}, {0, 3}, {100, 100}, {-1, 1}, {4, 1}}
 	for _, p := range fuera {
@@ -67,7 +67,7 @@ func TestSetFueraDelFrameSeIgnora(t *testing.T) {
 }
 
 func TestClearDejaTodoNegro(t *testing.T) {
-	f := render.New(3, 3)
+	f := render.NewFrame(3, 3)
 	f.Set(0, 0, 1)
 	f.Set(2, 2, 0.5)
 	f.Clear()
@@ -80,7 +80,7 @@ func TestClearDejaTodoNegro(t *testing.T) {
 }
 
 func TestStringTieneUnaLineaPorFila(t *testing.T) {
-	f := render.New(5, 3)
+	f := render.NewFrame(5, 3)
 	lineas := strings.Split(f.String(), "\n")
 
 	// cada fila termina en "\n", así que Split deja un "" al final
@@ -95,7 +95,7 @@ func TestStringTieneUnaLineaPorFila(t *testing.T) {
 }
 
 func TestStringNegroEsPrimerCaracterYBlancoEsUltimo(t *testing.T) {
-	f := render.New(2, 1)
+	f := render.NewFrame(2, 1)
 	f.Set(0, 0, 0)
 	f.Set(1, 0, 1)
 	s := f.String()
@@ -111,7 +111,7 @@ func TestStringNegroEsPrimerCaracterYBlancoEsUltimo(t *testing.T) {
 // Recorre 256 niveles de brillo: más brillo nunca puede dar un carácter más
 // oscuro, y todos los caracteres de la rampa tienen que poder aparecer.
 func TestStringUsaLaRampaCompletaEnOrden(t *testing.T) {
-	f := render.New(256, 1)
+	f := render.NewFrame(256, 1)
 	for x := 0; x < 256; x++ {
 		f.Set(x, 0, float32(x)/255)
 	}

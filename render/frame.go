@@ -20,8 +20,8 @@ type Frame struct {
 	Light         []float32 // row by row, cell (x, y) would be .Light[x + .Width*y]
 }
 
-// New creates a new frame of corresponding .Width and .Height with all black cells
-func New(width, height int) *Frame {
+// NewFrame creates a new frame of corresponding .Width and .Height with all black cells
+func NewFrame(width, height int) *Frame {
 	ret_frame := Frame{Width: width, Height: height, Light: make([]float32, width*height)}
 	return &ret_frame
 }
