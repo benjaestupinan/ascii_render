@@ -32,7 +32,8 @@ func Run(g Game) error {
 	ticker := time.NewTicker(time.Second / 30)
 	defer ticker.Stop()
 
-	fmt.Print("\033[H\033[2J")
+	fmt.Print("\033[?1049h\033[?25l")
+	defer fmt.Print("\033[?25h\033[?1049l")
 
 	last := time.Now()
 	for {
