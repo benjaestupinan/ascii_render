@@ -1,7 +1,6 @@
 # ascii_render
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/benjaestupinan/ascii_render.svg)](https://pkg.go.dev/github.com/benjaestupinan/ascii_render)
-[![Go Report Card](https://goreportcard.com/badge/github.com/benjaestupinan/ascii_render)](https://goreportcard.com/report/github.com/benjaestupinan/ascii_render)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A Go library for rendering scenes and games as ASCII art in the terminal.
