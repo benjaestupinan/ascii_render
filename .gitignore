@@ -2,8 +2,10 @@
 *.jpeg
 *.mp4
 
-ascii_render
-ascii-player
+# binaries built in the root by go build (the leading / keeps them from
+# matching directories with the same name, like cmd/ascii-player)
+/ascii_render
+/ascii-player
 
 docs/player-gif.sh
 docs/fall-gif.sh
