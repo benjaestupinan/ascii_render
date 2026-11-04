@@ -10,14 +10,14 @@ import (
 )
 
 func setFrameRoutine(video *vidio.Video, frame_buffers_list []*image.NRGBA, ready_channel chan int, frames_channel chan int) {
-	// cerrar el channel le avisa a VideoToAscii que no vienen más frames
+	// closing the channel tells videoToAscii that no more frames are coming
 	defer close(frames_channel)
 
-	// espera un buffer libre, lee el siguiente frame y lo manda
+	// wait for a free buffer, read the next frame into it and send it
 	for frame_buffer_index := range ready_channel {
 		err := video.SetFrameBuffer(frame_buffers_list[frame_buffer_index].Pix)
 		if err != nil {
-			fmt.Println("error setteando el framebuffer", err)
+			fmt.Println("error setting the framebuffer:", err)
 			return
 		}
 
@@ -31,7 +31,7 @@ func setFrameRoutine(video *vidio.Video, frame_buffers_list []*image.NRGBA, read
 func videoToAscii(video_path string, resolution int) {
 	video, err := vidio.NewVideo(video_path)
 	if err != nil {
-		fmt.Println("error creando video", err)
+		fmt.Println("error opening the video:", err)
 		return
 	}
 	defer video.Close()
@@ -51,12 +51,12 @@ func videoToAscii(video_path string, resolution int) {
 		frames_list[i] = image.NewNRGBA(image.Rect(0, 0, w, h))
 	}
 
-	// al principio todos los buffers están libres
+	// at the start every buffer is free
 	for i := 0; i < N; i++ {
 		ready_channel <- i
 	}
 
-	// una sola goroutine es dueña de `video`
+	// a single goroutine owns `video`
 	go setFrameRoutine(video, frames_list, ready_channel, frames_channel)
 
 	ticker := time.NewTicker(time.Duration(float64(time.Second) / video.FPS()))

@@ -5,7 +5,7 @@ import (
 	"image/draw"
 )
 
-// FromImage recive una image.Image y un width y devuelve un puntero a un frame que contiene la imagen en ascii
+// FromImage receives an image.Image and a width and returns a pointer to a frame that contains the image in ascii
 func FromImage(img image.Image, width int) *Frame {
 	img_rect := img.Bounds().Bounds()
 	img_h := img_rect.Dy()
@@ -17,7 +17,7 @@ func FromImage(img image.Image, width int) *Frame {
 		draw.Draw(nrgba, img_rect, img, img_rect.Min, draw.Src)
 	}
 
-	// cuántos pixeles reales corresponden a un caracter
+	// how many real pixels correspond to one character
 	block_w := float64(img_w) / float64(width)
 	block_h := block_w * 2.4 // ratio of width to height 1:2.4
 	height := int(float64(img_h) / block_h)
@@ -27,7 +27,7 @@ func FromImage(img image.Image, width int) *Frame {
 	for i := range height {
 		for j := range width {
 
-			// rangos de pixeles de ESTE carácter
+			// pixel ranges of THIS character
 			start_x := int(float64(j) * block_w)
 			end_x := int(float64(j+1) * block_w)
 
@@ -41,7 +41,7 @@ func FromImage(img image.Image, width int) *Frame {
 				end_y = start_y + 1
 			}
 
-			// corregir out-of-bounds
+			// fix out-of-bounds
 			if end_x > img_w {
 				end_x = img_w
 			}
@@ -49,13 +49,13 @@ func FromImage(img image.Image, width int) *Frame {
 				end_y = img_h
 			}
 
-			// acumular promedio
+			// accumulate average
 			var sum float32
 			var count int
 
 			for y := start_y; y < end_y; y++ {
 				for x := start_x; x < end_x; x++ {
-					// PixOffset ya considera img_rect.Min
+					// PixOffset takes absolute coordinates, hence the + Min
 					off := nrgba.PixOffset(x+img_rect.Min.X, y+img_rect.Min.Y)
 					r, g, b := nrgba.Pix[off], nrgba.Pix[off+1], nrgba.Pix[off+2]
 					sum += float32(int(r)+int(g)+int(b)) / 3
@@ -64,7 +64,7 @@ func FromImage(img image.Image, width int) *Frame {
 			}
 
 			avg := sum / float32(count)
-			avg /= 255 // los bytes de Pix van de 0 a 255
+			avg /= 255 // Pix bytes go from 0 to 255
 
 			ret_frame.Set(j, i, avg)
 		}

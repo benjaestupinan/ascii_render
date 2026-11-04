@@ -9,14 +9,14 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Println("Falta argumento")
+		fmt.Println("Missing argument")
 		return
 	}
 
 	res_s := os.Args[2]
 	resolution, err := strconv.Atoi(res_s)
 	if err != nil {
-		fmt.Println("Argumento no es número")
+		fmt.Println("Argument is not a number")
 		return
 	}
 

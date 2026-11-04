@@ -14,17 +14,16 @@ func imageToAscii(image_path string, resolution int) {
 
 	reader, err := os.Open(image_path)
 	if err != nil {
-		fmt.Println("error abriendo el archivo", err)
+		fmt.Println("error opening the file:", err)
 		return
 	}
 	defer reader.Close()
 	img, _, err := image.Decode(reader)
 	if err != nil {
-		fmt.Println("error decodificando imagen:", err)
+		fmt.Println("error decoding image:", err)
 		return
 	}
 
 	frame := render.FromImage(img, resolution)
-	// ordered ascii brightness string
 	fmt.Print(frame.String())
 }

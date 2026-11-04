@@ -1,5 +1,5 @@
-// El ejemplo más simple de engine: un cometa cruza la pantalla de izquierda a
-// derecha y la escena termina cuando sale por el otro lado.
+// The simplest engine example: a comet crosses the screen from left to right
+// and the scene ends when it leaves through the other side.
 package main
 
 import (
@@ -10,18 +10,18 @@ import (
 )
 
 const (
-	duracion = 4.0 // segundos que tarda en cruzar la pantalla
-	cola     = 12  // largo de la cola, en celdas
+	duration   = 4.0 // seconds it takes to cross the screen
+	tailLength = 12  // length of the tail, in cells
 )
 
 type scene struct {
-	// posición como fracción del ancho de la pantalla: 0 es el borde
-	// izquierdo y 1 el derecho. Así Update no necesita saber cuánto mide.
+	// position as a fraction of the screen width: 0 is the left edge and 1
+	// the right one. This way Update doesn't need to know how wide it is.
 	x float32
 }
 
 func (s *scene) Update(dt float32) error {
-	s.x += dt / duracion
+	s.x += dt / duration
 	if s.x > 1 {
 		return engine.ErrQuit
 	}
@@ -32,16 +32,16 @@ func (s *scene) Draw(f *render.Frame) {
 	col := int(s.x * float32(f.Width))
 	row := f.Height / 2
 
-	// la cabeza es la celda más brillante y la cola se va apagando hacia
-	// atrás. Las celdas fuera del frame las ignora Set.
-	for i := range cola {
-		brillo := 1 - float32(i)/cola
-		f.Set(col-i, row, brillo)
+	// the head is the brightest cell and the tail fades out behind it.
+	// Set ignores the cells that fall outside the frame.
+	for i := range tailLength {
+		light := 1 - float32(i)/tailLength
+		f.Set(col-i, row, light)
 	}
 }
 
 func main() {
 	if err := engine.Run(&scene{}); err != nil {
-		fmt.Println("error corriendo el motor:", err)
+		fmt.Println("error running the engine:", err)
 	}
 }

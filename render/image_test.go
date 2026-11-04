@@ -9,8 +9,8 @@ import (
 	"github.com/benjaestupinan/ascii_render/render"
 )
 
-// imagen de w×h pintada entera de un color
-func imagenDeColor(w, h int, c color.Color) *image.NRGBA {
+// w×h image filled entirely with one color
+func solidColorImage(w, h int, c color.Color) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, w, h))
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -20,9 +20,9 @@ func imagenDeColor(w, h int, c color.Color) *image.NRGBA {
 	return img
 }
 
-// imagen de w×h con la mitad izquierda blanca y la derecha negra
-func imagenMitades(w, h int) *image.NRGBA {
-	img := imagenDeColor(w, h, color.Black)
+// w×h image with the left half white and the right half black
+func halvesImage(w, h int) *image.NRGBA {
+	img := solidColorImage(w, h, color.Black)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w/2; x++ {
 			img.Set(x, y, color.White)
@@ -31,62 +31,62 @@ func imagenMitades(w, h int) *image.NRGBA {
 	return img
 }
 
-func casiIgual(a, b float32) bool {
+func almostEqual(a, b float32) bool {
 	return math.Abs(float64(a-b)) < 0.01
 }
 
-// Cada carácter cubre un bloque de (ancho/width) píxeles de ancho y 2.4 veces
-// eso de alto, porque un carácter de la terminal es unas 2.4 veces más alto
-// que ancho. Las filas incompletas al final se descartan.
-func TestFromImageCalculaElTamano(t *testing.T) {
-	casos := []struct {
+// Each character covers a block (image width / width) pixels wide and 2.4
+// times that tall, because a terminal character is about 2.4 times taller
+// than it is wide. Incomplete rows at the bottom are dropped.
+func TestFromImageComputesSize(t *testing.T) {
+	cases := []struct {
 		imgW, imgH, width int
 		wantW, wantH      int
 	}{
-		{100, 50, 10, 10, 2},     // bloques de 10×24 → 50/24 ≈ 2.08 → 2 filas
-		{1920, 1080, 80, 80, 18}, // bloques de 24×57.6 → 1080/57.6 = 18.75 → 18 filas
-		{576, 1024, 60, 60, 44},  // tu video vertical: bloques de 9.6×23.04 → 44.4 → 44 filas
+		{100, 50, 10, 10, 2},     // 10×24 blocks → 50/24 ≈ 2.08 → 2 rows
+		{1920, 1080, 80, 80, 18}, // 24×57.6 blocks → 1080/57.6 = 18.75 → 18 rows
+		{576, 1024, 60, 60, 44},  // vertical phone video: 9.6×23.04 blocks → 44.4 → 44 rows
 	}
-	for _, c := range casos {
-		f := render.FromImage(imagenDeColor(c.imgW, c.imgH, color.Black), c.width)
+	for _, c := range cases {
+		f := render.FromImage(solidColorImage(c.imgW, c.imgH, color.Black), c.width)
 		if f.Width != c.wantW || f.Height != c.wantH {
-			t.Errorf("imagen %dx%d con width %d → frame %dx%d, se esperaba %dx%d",
+			t.Errorf("%dx%d image with width %d → %dx%d frame, want %dx%d",
 				c.imgW, c.imgH, c.width, f.Width, f.Height, c.wantW, c.wantH)
 		}
 	}
 }
 
-func TestFromImageBlancoYNegro(t *testing.T) {
-	blanco := render.FromImage(imagenDeColor(40, 40, color.White), 4)
-	for i, v := range blanco.Light {
-		if !casiIgual(v, 1) {
-			t.Errorf("imagen blanca: Light[%d] = %v, se esperaba 1", i, v)
+func TestFromImageWhiteAndBlack(t *testing.T) {
+	white := render.FromImage(solidColorImage(40, 40, color.White), 4)
+	for i, v := range white.Light {
+		if !almostEqual(v, 1) {
+			t.Errorf("white image: Light[%d] = %v, want 1", i, v)
 		}
 	}
 
-	negro := render.FromImage(imagenDeColor(40, 40, color.Black), 4)
-	for i, v := range negro.Light {
-		if !casiIgual(v, 0) {
-			t.Errorf("imagen negra: Light[%d] = %v, se esperaba 0", i, v)
+	black := render.FromImage(solidColorImage(40, 40, color.Black), 4)
+	for i, v := range black.Light {
+		if !almostEqual(v, 0) {
+			t.Errorf("black image: Light[%d] = %v, want 0", i, v)
 		}
 	}
 }
 
-// El brillo es el promedio de rojo, verde y azul: (255 + 0 + 0) / 3 = 85 → 85/255
-func TestFromImagePromediaLosColores(t *testing.T) {
-	rojo := color.NRGBA{R: 255, G: 0, B: 0, A: 255}
-	f := render.FromImage(imagenDeColor(40, 40, rojo), 4)
+// Light is the average of red, green and blue: (255 + 0 + 0) / 3 = 85 → 85/255
+func TestFromImageAveragesColors(t *testing.T) {
+	red := color.NRGBA{R: 255, G: 0, B: 0, A: 255}
+	f := render.FromImage(solidColorImage(40, 40, red), 4)
 
 	for i, v := range f.Light {
-		if !casiIgual(v, 85.0/255) {
-			t.Errorf("imagen roja: Light[%d] = %v, se esperaba %v", i, v, 85.0/255)
+		if !almostEqual(v, 85.0/255) {
+			t.Errorf("red image: Light[%d] = %v, want %v", i, v, 85.0/255)
 		}
 	}
 }
 
-// Comprueba que cada celda promedia SU bloque de la imagen y no otro.
-func TestFromImageCadaCeldaMiraSuBloque(t *testing.T) {
-	f := render.FromImage(imagenMitades(40, 48), 4) // bloques de 10×24 → 4×2 celdas
+// Checks that each cell averages ITS block of the image and not another one.
+func TestFromImageEachCellReadsItsBlock(t *testing.T) {
+	f := render.FromImage(halvesImage(40, 48), 4) // 10×24 blocks → 4×2 cells
 
 	for y := 0; y < f.Height; y++ {
 		for x := 0; x < f.Width; x++ {
@@ -95,82 +95,82 @@ func TestFromImageCadaCeldaMiraSuBloque(t *testing.T) {
 			if x < 2 {
 				want = 1
 			}
-			if !casiIgual(got, want) {
-				t.Errorf("celda (%d, %d) = %v, se esperaba %v", x, y, got, want)
+			if !almostEqual(got, want) {
+				t.Errorf("cell (%d, %d) = %v, want %v", x, y, got, want)
 			}
 		}
 	}
 }
 
-// Era el bug del NaN: con más columnas que píxeles, había bloques vacíos.
-func TestFromImageConMasColumnasQuePixeles(t *testing.T) {
-	gris := color.NRGBA{R: 128, G: 128, B: 128, A: 255}
-	f := render.FromImage(imagenDeColor(4, 4, gris), 10)
+// This was the NaN bug: with more columns than pixels, some blocks were empty.
+func TestFromImageWithMoreColumnsThanPixels(t *testing.T) {
+	gray := color.NRGBA{R: 128, G: 128, B: 128, A: 255}
+	f := render.FromImage(solidColorImage(4, 4, gray), 10)
 
 	if f.Width != 10 {
-		t.Fatalf("Width = %d, se esperaba 10", f.Width)
+		t.Fatalf("Width = %d, want 10", f.Width)
 	}
 	for i, v := range f.Light {
-		if !casiIgual(v, 128.0/255) {
-			t.Errorf("Light[%d] = %v, se esperaba %v", i, v, 128.0/255)
+		if !almostEqual(v, 128.0/255) {
+			t.Errorf("Light[%d] = %v, want %v", i, v, 128.0/255)
 		}
 	}
 }
 
-// Una imagen no siempre empieza en (0, 0): SubImage devuelve un pedazo de
-// otra imagen que conserva sus coordenadas originales. Aquí la imagen va de
-// x=20 a x=40, así que leer desde x=0 sería leer fuera de ella.
-func TestFromImageRespetaElOrigenDeLaImagen(t *testing.T) {
-	img := imagenDeColor(40, 40, color.Black)
+// An image doesn't always start at (0, 0): SubImage returns a piece of
+// another image that keeps its original coordinates. Here the image goes
+// from x=20 to x=40, so reading from x=0 would read outside of it.
+func TestFromImageRespectsImageOrigin(t *testing.T) {
+	img := solidColorImage(40, 40, color.Black)
 	for y := 0; y < 40; y++ {
 		for x := 20; x < 40; x++ {
 			img.Set(x, y, color.White)
 		}
 	}
-	mitadDerecha := img.SubImage(image.Rect(20, 0, 40, 40)) // toda blanca
+	rightHalf := img.SubImage(image.Rect(20, 0, 40, 40)) // all white
 
-	f := render.FromImage(mitadDerecha, 2)
+	f := render.FromImage(rightHalf, 2)
 	for i, v := range f.Light {
-		if !casiIgual(v, 1) {
-			t.Errorf("Light[%d] = %v, se esperaba 1 (¿se leyó desde (0, 0) en vez de Bounds().Min?)", i, v)
+		if !almostEqual(v, 1) {
+			t.Errorf("Light[%d] = %v, want 1 (was it read from (0, 0) instead of Bounds().Min?)", i, v)
 		}
 	}
 }
 
-// Una librería no puede elegir qué tipo de imagen le pasan: PNG en escala de
-// grises da *image.Gray, JPEG da *image.YCbCr, etc.
-func TestFromImageAceptaCualquierTipoDeImagen(t *testing.T) {
-	gris := image.NewGray(image.Rect(0, 0, 40, 40))
-	for i := range gris.Pix {
-		gris.Pix[i] = 128
+// A library can't choose what kind of image it gets: grayscale PNGs give
+// *image.Gray, JPEGs give *image.YCbCr, etc.
+func TestFromImageAcceptsAnyImageType(t *testing.T) {
+	gray := image.NewGray(image.Rect(0, 0, 40, 40))
+	for i := range gray.Pix {
+		gray.Pix[i] = 128
 	}
 	rgba := image.NewRGBA(image.Rect(0, 0, 40, 40))
 	for i := range rgba.Pix {
 		rgba.Pix[i] = 128
 		if i%4 == 3 {
-			rgba.Pix[i] = 255 // alfa opaco
+			rgba.Pix[i] = 255 // opaque alpha
 		}
 	}
 
-	casos := map[string]image.Image{"*image.Gray": gris, "*image.RGBA": rgba}
-	for nombre, img := range casos {
+	cases := map[string]image.Image{"*image.Gray": gray, "*image.RGBA": rgba}
+	for name, img := range cases {
 		f := render.FromImage(img, 4)
 		for i, v := range f.Light {
-			if !casiIgual(v, 128.0/255) {
-				t.Errorf("%s: Light[%d] = %v, se esperaba %v", nombre, i, v, 128.0/255)
+			if !almostEqual(v, 128.0/255) {
+				t.Errorf("%s: Light[%d] = %v, want %v", name, i, v, 128.0/255)
 				break
 			}
 		}
 	}
 }
 
-// No es un test que falle: mide cuánto tarda. Córrelo con
+// Not a test that fails: it measures how long FromImage takes. Run it with
 //
 //	go test -bench=. ./render
 //
-// Para video a 30 fps, cada frame tiene 33 ms en total.
+// For 30 fps video, each frame has 33 ms in total.
 func BenchmarkFromImage1080p(b *testing.B) {
-	img := imagenMitades(1920, 1080)
+	img := halvesImage(1920, 1080)
 	for b.Loop() {
 		render.FromImage(img, 200)
 	}

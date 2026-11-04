@@ -1,5 +1,5 @@
-// Una pelota que cae por gravedad, rebota en el suelo y en las paredes, y
-// va perdiendo energía hasta quedarse quieta.
+// A ball that falls by gravity, bounces off the floor and the walls, and
+// loses energy until it comes to rest.
 package main
 
 import (
@@ -10,28 +10,28 @@ import (
 	"github.com/benjaestupinan/ascii_render/render"
 )
 
-// El mundo se mide en metros, no en celdas: la física no sabe nada de la
-// pantalla. Draw se encarga de convertir metros a celdas.
+// The world is measured in meters, not cells: the physics knows nothing about
+// the screen. Draw takes care of converting meters to cells.
 const (
-	worldWidth  = 16.0 // metros
-	worldHeight = 9.0  // metros
+	worldWidth  = 16.0 // meters
+	worldHeight = 9.0  // meters
 
-	gravity     = 9.8 // m/s², hacia abajo
-	restitution = 0.9 // fracción de la velocidad que queda después de un rebote
-	radius      = 0.8 // metros
+	gravity     = 9.8 // m/s², downwards
+	restitution = 0.9 // fraction of the speed left after a bounce
+	radius      = 0.8 // meters
 
-	// las celdas de la terminal son 2.4 veces más altas que anchas
+	// terminal cells are 2.4 times taller than they are wide
 	cellAspect = 2.4
 )
 
 type scene struct {
-	// posición del centro de la pelota, con y = 0 en el suelo y hacia arriba
+	// position of the center of the ball, with y = 0 at the floor and going up
 	x, y   float32
-	vx, vy float32 // velocidad en m/s
+	vx, vy float32 // velocity in m/s
 
-	angulo float32 // giro de la pelota, en radianes
+	angle float32 // rotation of the ball, in radians
 
-	quieta float32 // segundos que lleva sin rebotar
+	stillTime float32 // seconds it has been without bouncing
 }
 
 func (s *scene) Update(dt float32) error {
@@ -39,16 +39,16 @@ func (s *scene) Update(dt float32) error {
 	s.x += s.vx * dt
 	s.y += s.vy * dt
 
-	// gira como si rodara sin resbalar: vx / radius radianes por segundo.
-	// Va hacia la derecha → gira en sentido horario → el ángulo disminuye.
-	s.angulo -= s.vx / radius * dt
+	// spins as if rolling without slipping: vx / radius radians per second.
+	// Moving right → spins clockwise → the angle decreases.
+	s.angle -= s.vx / radius * dt
 
-	// suelo: si la pelota lo atraviesa, se devuelve a la superficie y la
-	// velocidad vertical se invierte perdiendo energía
+	// floor: if the ball goes through it, it is moved back to the surface and
+	// its vertical velocity is reversed, losing energy
 	if s.y-radius < 0 {
 		s.y = radius
 		s.vy = -s.vy * restitution
-		s.vx *= 0.98 // un poco de roce
+		s.vx *= 0.98 // a bit of friction
 	}
 
 	if s.y+radius > worldHeight {
@@ -56,7 +56,7 @@ func (s *scene) Update(dt float32) error {
 		s.vy = -s.vy * restitution
 	}
 
-	// paredes
+	// walls
 	if s.x-radius < 0 {
 		s.x = radius
 		s.vx = -s.vx * restitution
@@ -66,51 +66,51 @@ func (s *scene) Update(dt float32) error {
 		s.vx = -s.vx * restitution
 	}
 
-	// la escena termina cuando la pelota lleva 1 segundo casi sin moverse
+	// the scene ends when the ball has barely moved for 1 second
 	if s.y-radius < 0.01 && abs(s.vy) < 0.5 && abs(s.vx) < 0.5 {
-		s.quieta += dt
+		s.stillTime += dt
 	} else {
-		s.quieta = 0
+		s.stillTime = 0
 	}
-	if s.quieta > 1 {
+	if s.stillTime > 1 {
 		return engine.ErrQuit
 	}
 	return nil
 }
 
 func (s *scene) Draw(f *render.Frame) {
-	// Cuántas celdas mide un metro. Una celda es 2.4 veces más alta que
-	// ancha, así que un metro ocupa 2.4 veces más columnas que filas.
-	// Se elige la escala más grande que hace caber el mundo en el frame.
+	// How many cells one meter takes. A cell is 2.4 times taller than it is
+	// wide, so one meter takes 2.4 times more columns than rows.
+	// The largest scale that fits the whole world in the frame is used.
 	rowsPerMeter := min(
 		float32(f.Height)/worldHeight,
 		float32(f.Width)/(worldWidth*cellAspect),
 	)
 	colsPerMeter := rowsPerMeter * cellAspect
 
-	// el mundo se dibuja centrado horizontalmente
+	// the world is drawn horizontally centered
 	offsetCol := (float32(f.Width) - worldWidth*colsPerMeter) / 2
 
-	// convierte una celda (col, row) a la posición en metros de su centro
+	// converts a cell (col, row) to the position of its center in meters
 	toWorld := func(col, row int) (float32, float32) {
 		wx := (float32(col) + 0.5 - offsetCol) / colsPerMeter
 		wy := worldHeight - (float32(row)+0.5)/rowsPerMeter
 		return wx, wy
 	}
 
-	// el punto más brillante gira alrededor del centro según s.angulo
-	// (con angulo = 0 está arriba): así se ve redonda y además "gira"
-	hx := s.x - 0.5 * radius*float32(math.Sin(float64(s.angulo)))
-	hy := s.y + 0.5 * radius*float32(math.Cos(float64(s.angulo)))
+	// the brightest point spins around the center according to s.angle
+	// (with angle = 0 it is on top): this makes the ball look round and "spin"
+	hx := s.x - 0.5*radius*float32(math.Sin(float64(s.angle)))
+	hy := s.y + 0.5*radius*float32(math.Cos(float64(s.angle)))
 
 	for row := range f.Height {
 		for col := range f.Width {
 			wx, wy := toWorld(col, row)
 			if wx < 0 || wx > worldWidth {
-				continue // fuera del mundo
+				continue // outside the world
 			}
 
-			// suelo: solo la primera fila bajo y = 0
+			// floor: only the first row below y = 0
 			if wy < 0 {
 				if wy > -1/rowsPerMeter {
 					f.Set(col, row, 0.3)
@@ -118,10 +118,10 @@ func (s *scene) Draw(f *render.Frame) {
 				continue
 			}
 
-			// pelota: celdas a menos de `radius` metros del centro
+			// ball: cells less than `radius` meters away from the center
 			if dist(wx, wy, s.x, s.y) < radius {
-				brillo := 1 - dist(wx, wy, hx, hy)/(radius*1.6)
-				f.Set(col, row, max(brillo, 0.15))
+				light := 1 - dist(wx, wy, hx, hy)/(radius*1.6)
+				f.Set(col, row, max(light, 0.15))
 			}
 		}
 	}
@@ -137,12 +137,12 @@ func abs(v float32) float32 {
 }
 
 func main() {
-	pelota := &scene{
+	ball := &scene{
 		x:  2,
 		y:  worldHeight - radius,
 		vx: 3,
 	}
-	if err := engine.Run(pelota); err != nil {
-		fmt.Println("error corriendo el motor:", err)
+	if err := engine.Run(ball); err != nil {
+		fmt.Println("error running the engine:", err)
 	}
 }

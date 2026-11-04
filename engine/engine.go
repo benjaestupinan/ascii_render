@@ -1,4 +1,4 @@
-// Package engine corre un game loop que dibuja un Game en la terminal.
+// Package engine runs a game loop that draws a Game in the terminal.
 package engine
 
 import (
@@ -9,24 +9,24 @@ import (
 	"github.com/benjaestupinan/ascii_render/render"
 )
 
-// Game es una escena que engine.Run anima. En cada tic, Run llama a Update
-// y después a Draw.
+// Game is a scene animated by engine.Run. On every tick, Run calls Update
+// and then Draw.
 type Game interface {
-	// Update avanza la escena dt segundos. Devuelve ErrQuit para terminar
-	// normalmente, o cualquier otro error para detener Run con ese error.
+	// Update advances the scene by dt seconds. It returns ErrQuit to finish
+	// normally, or any other error to stop Run with that error.
 	Update(dt float32) error
 
-	// Draw dibuja el estado actual de la escena en f, que llega en negro.
+	// Draw draws the current state of the scene into f, which arrives black.
 	Draw(f *render.Frame)
 }
 
-// ErrQuit lo devuelve Game.Update para terminar el game loop. Run lo trata
-// como una salida normal y devuelve nil.
+// ErrQuit is returned by Game.Update to stop the game loop. Run treats it as
+// a normal exit and returns nil.
 var ErrQuit = errors.New("engine: quit")
 
-// Run toma la terminal y corre el game loop de g hasta que Update devuelva
-// un error o el usuario presione Ctrl+C. Al salir, siempre deja la terminal
-// como estaba. Devuelve nil si el juego terminó con ErrQuit o Ctrl+C.
+// Run takes over the terminal and runs g's game loop until Update returns an
+// error or the user presses Ctrl+C. On exit it always leaves the terminal as
+// it was. It returns nil if the game ended with ErrQuit or Ctrl+C.
 func Run(g Game) error {
 	frame := render.NewFrame(465, 109)
 	ticker := time.NewTicker(time.Second / 30)
