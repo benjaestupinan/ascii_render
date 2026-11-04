@@ -1,3 +1,5 @@
+// Package render draws scenes and images as ASCII art. A Frame is a grid of
+// light values, one per terminal character, that String turns into text.
 package render
 
 import (
