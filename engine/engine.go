@@ -4,9 +4,11 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/benjaestupinan/ascii_render/render"
+	"golang.org/x/term"
 )
 
 // Game is a scene animated by engine.Run. On every tick, Run calls Update
@@ -28,7 +30,11 @@ var ErrQuit = errors.New("engine: quit")
 // error or the user presses Ctrl+C. On exit it always leaves the terminal as
 // it was. It returns nil if the game ended with ErrQuit or Ctrl+C.
 func Run(g Game) error {
-	frame := render.NewFrame(465, 109)
+	width, height, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return fmt.Errorf("engine: unable to get terminal size: %w", err)
+	}
+	frame := render.NewFrame(width, height-1)
 	ticker := time.NewTicker(time.Second / 30)
 	defer ticker.Stop()
 
@@ -37,11 +43,19 @@ func Run(g Game) error {
 
 	last := time.Now()
 	for {
+		newWidth, newHeight, err := term.GetSize(int(os.Stdout.Fd()))
+		if err != nil {
+			return fmt.Errorf("engine: unable to get terminal size: %w", err)
+		}
+		if newWidth != frame.Width || newHeight != frame.Height + 1 {
+			fmt.Print("\033[2J")
+			frame = render.NewFrame(newWidth, newHeight-1)
+		}
 		<-ticker.C
 		dt := time.Since(last)
 		last = time.Now()
 
-		err := g.Update(float32(dt.Seconds()))
+		err = g.Update(float32(dt.Seconds()))
 		if err != nil {
 			if errors.Is(err, ErrQuit) {
 				return nil

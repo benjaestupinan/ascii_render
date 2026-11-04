@@ -184,7 +184,7 @@ same time.
 - [x] Image and video player
 - [x] Game loop with animated scenes
 - [ ] Exit cleanly on Ctrl+C
-- [ ] Adapt the frame to the terminal size
+- [x] Adapt the frame to the terminal size
 - [ ] Keyboard input
 - [ ] 3D math: vectors, matrices and projection
 - [ ] Wireframe rendering
