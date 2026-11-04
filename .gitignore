@@ -1,4 +1,8 @@
 *.png
 *.jpeg
+*.mp4
 
 ascii_render
+ascii-player
+
+docs/player-gif.sh
