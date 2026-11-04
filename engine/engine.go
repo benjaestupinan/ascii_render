@@ -47,7 +47,7 @@ func Run(g Game) error {
 		if err != nil {
 			return fmt.Errorf("engine: unable to get terminal size: %w", err)
 		}
-		if newWidth != frame.Width || newHeight != frame.Height + 1 {
+		if newWidth != frame.Width || newHeight != frame.Height+1 {
 			fmt.Print("\033[2J")
 			frame = render.NewFrame(newWidth, newHeight-1)
 		}

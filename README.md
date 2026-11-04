@@ -17,7 +17,11 @@ videos as ASCII art.
 
 ## Preview
 
-This spooky GIF shows how the tool looks:
+A ball bouncing with gravity, drawn with the engine (`examples/fall`):
+
+![Ball bouncing with gravity](docs/fall.gif)
+
+This spooky GIF shows how the player looks (`cmd/ascii-player`):
 
 ![Video player playing the staircase scene of Nosferatu](docs/player.gif)
 
