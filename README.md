@@ -181,20 +181,6 @@ same time.
 | [`cmd/ascii-player`](cmd/ascii-player) | Command-line image and video player. |
 | [`examples`](examples) | Small scenes built with the library. |
 
-## Roadmap
-
-- [x] Frame buffer and image conversion
-- [x] Image and video player
-- [x] Game loop with animated scenes
-- [ ] Exit cleanly on Ctrl+C
-- [x] Adapt the frame to the terminal size
-- [ ] Keyboard input
-- [ ] 3D math: vectors, matrices and projection
-- [ ] Wireframe rendering
-- [ ] Solid triangle rasterizer with z-buffer and lighting
-- [ ] Camera and `.obj` model loading
-- [ ] A complete 3D game built with the library
-
 ## Development
 
 ```sh
