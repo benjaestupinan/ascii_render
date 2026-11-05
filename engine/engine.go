@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/benjaestupinan/ascii_render/render"
+	"github.com/nsf/termbox-go"
 	"golang.org/x/term"
 )
 
@@ -26,6 +27,23 @@ type Game interface {
 // a normal exit and returns nil.
 var ErrQuit = errors.New("engine: quit")
 
+func processKeys(keys <-chan string, keyActions KeyActionMap) error {
+	for {
+		select {
+		case k := <-keys:
+			err := executeKeyAction(keyActions, k)
+			if err != nil {
+				if errors.Is(err, ErrQuit) {
+					return ErrQuit
+				}
+				return fmt.Errorf("engine: key action execution failed: %w", err)
+			}
+		default:
+			return nil
+		}
+	}
+}
+
 // Run takes over the terminal and runs g's game loop until Update returns an
 // error or the user presses Ctrl+C. On exit it always leaves the terminal as
 // it was. It returns nil if the game ended with ErrQuit or Ctrl+C.
@@ -41,6 +59,19 @@ func Run(g Game) error {
 	fmt.Print("\033[?1049h\033[?25l")
 	defer fmt.Print("\033[?25h\033[?1049l")
 
+	inputs_channel := make(chan string, 16)
+	var keyActions KeyActionMap
+	if keyHandler, ok := g.(KeyHandler); ok {
+		err := termbox.Init()
+		if err != nil {
+			return fmt.Errorf("engine: unable to initialize termbox: %w", err)
+		}
+		defer termbox.Close()
+		defer termbox.Interrupt()
+		keyActions = keyHandler.KeyActions()
+		go ReadInput(inputs_channel)
+	}
+
 	last := time.Now()
 	for {
 		newWidth, newHeight, err := term.GetSize(int(os.Stdout.Fd()))
@@ -54,6 +85,11 @@ func Run(g Game) error {
 		<-ticker.C
 		dt := time.Since(last)
 		last = time.Now()
+
+		err = processKeys(inputs_channel, keyActions)
+		if err != nil {
+			return err
+		}
 
 		err = g.Update(float32(dt.Seconds()))
 		if err != nil {
