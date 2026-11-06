@@ -32,6 +32,8 @@ This spooky GIF shows how the player looks (`cmd/ascii-player`):
   drawn with a 70-character brightness ramp.
 - **Game loop**: implement `Update` and `Draw`, and `engine.Run` animates your
   scene at 30 fps with a measured delta time.
+- **Keyboard input**: map key names to actions, and the engine runs them
+  before each `Update`, in the same goroutine as your scene.
 - **Clean terminal handling**: runs in the alternate screen with a hidden
   cursor, and leaves the terminal exactly as it was on exit.
 - **Images and video**: convert any `image.Image` to a frame, and play `.mp4`
@@ -103,6 +105,28 @@ func main() {
 }
 ```
 
+### Reading the keyboard
+
+To use the keyboard, add a `KeyActions` method to your scene. `engine.Run`
+calls it once at the start, and then runs the action of every key pressed
+before the next `Update`. Adding this to the comet above restarts it with
+space and quits with `q`:
+
+```go
+func (c *comet) KeyActions() engine.KeyActionMap {
+	return engine.KeyActionMap{
+		"space": func() error { c.x = 0; return nil },
+		"q":     func() error { return engine.ErrQuit },
+	}
+}
+```
+
+Characters are named after themselves (`"a"`, `"1"`, `"?"`), and special keys
+by lowercase names: `"up"`, `"down"`, `"left"`, `"right"`, `"space"`,
+`"enter"`, `"esc"`, `"f1"` to `"f12"`, `"insert"`, `"delete"`, `"home"`,
+`"end"`, `"pgup"` and `"pgdn"`. Keys without an action are ignored, and
+Ctrl+C always quits.
+
 ### Running the examples
 
 ```sh
@@ -111,6 +135,7 @@ cd ascii_render
 
 go run ./examples/move   # a comet crossing the screen
 go run ./examples/fall   # a ball bouncing with gravity
+go run ./examples/keys   # a snake you steer with the arrow keys or WASD
 ```
 
 ### Playing images and videos
@@ -177,7 +202,7 @@ same time.
 | Package | Description |
 | --- | --- |
 | [`render`](render) | `Frame`, the grid of light values, and `FromImage` to build one from an image. |
-| [`engine`](engine) | `Game`, the interface your scene implements, and `Run`, the game loop. |
+| [`engine`](engine) | `Game`, the interface your scene implements, `Run`, the game loop, and `KeyHandler` for keyboard input. |
 | [`cmd/ascii-player`](cmd/ascii-player) | Command-line image and video player. |
 | [`examples`](examples) | Small scenes built with the library. |
 
