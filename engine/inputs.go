@@ -34,11 +34,66 @@ type KeyHandler interface {
 
 func keyName(ev termbox.Event) string {
 	// fmt.Printf("%+v\n", ev) // usefull to tell "what Key is each key"
+	if ev.Type != 0{
+		return ""
+	}
 	switch ev.Key {
 	default:
 		return string(ev.Ch)
 	case 3:
 		return "ctrl+c"
+	case 32:
+		return "space"
+	case 13:
+		return "enter"
+	case 27:
+		return "esc"
+	case 65517:
+		return "up"
+	case 65516:
+		return "down"
+	case 65515:
+		return "left"
+	case 65514:
+		return "right"
+	case 127:
+		return "delete"
+	case 65522:
+		return "delete"
+	case 65523:
+		return "insert"
+	case 65521:
+		return "home"
+	case 65520:
+		return "end"
+	case 65519:
+		return "pgup"
+	case 65518:
+		return "pgdn"
+	case 65535:
+		return "f1"
+	case 65534:
+		return "f2"
+	case 65533:
+		return "f3"
+	case 65532:
+		return "f4"
+	case 65531:
+		return "f5"
+	case 65530:
+		return "f6"
+	case 65529:
+		return "f7"
+	case 65528:
+		return "f8"
+	case 65527:
+		return "f9"
+	case 65526:
+		return "f10"
+	case 65525:
+		return "f11"
+	case 65524:
+		return "f12"
 	}
 }
 
