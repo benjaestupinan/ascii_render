@@ -33,11 +33,21 @@ type KeyHandler interface {
 }
 
 func keyName(ev termbox.Event) string {
-
-	return string(ev.Ch)
+	// fmt.Printf("%+v\n", ev) // usefull to tell "what Key is each key"
+	switch ev.Key {
+	default:
+		return string(ev.Ch)
+	case 3:
+		return "ctrl+c"
+	}
 }
 
 func executeKeyAction(keyActions KeyActionMap, key string) error {
+
+	if key == "ctrl+c" {
+		return ErrQuit
+	}
+
 	action, ok := keyActions[key]
 	if ok {
 		err := action()
