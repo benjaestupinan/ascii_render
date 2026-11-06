@@ -13,7 +13,7 @@ import (
 )
 
 // Game is a scene animated by engine.Run. On every tick, Run calls Update
-// and then Draw.
+// and then Draw. A Game that also implements KeyHandler can use the keyboard.
 type Game interface {
 	// Update advances the scene by dt seconds. It returns ErrQuit to finish
 	// normally, or any other error to stop Run with that error.
@@ -23,10 +23,15 @@ type Game interface {
 	Draw(f *render.Frame)
 }
 
-// ErrQuit is returned by Game.Update to stop the game loop. Run treats it as
-// a normal exit and returns nil.
+// ErrQuit is returned by Game.Update or by an Action to stop the game loop.
+// Run treats it as a normal exit and returns nil.
 var ErrQuit = errors.New("engine: quit")
 
+// processKeys runs the action of every key waiting in keys, in order, and
+// returns as soon as the channel is empty, without waiting for new keys. It
+// stops at the first action that fails: ErrQuit is returned as is, so Run can
+// tell a normal exit apart, and other errors are wrapped. "ctrl+c" returns
+// ErrQuit even if keyActions has no action for it.
 func processKeys(keys <-chan string, keyActions KeyActionMap) error {
 	for {
 		select {
@@ -45,8 +50,10 @@ func processKeys(keys <-chan string, keyActions KeyActionMap) error {
 }
 
 // Run takes over the terminal and runs g's game loop until Update returns an
-// error or the user presses Ctrl+C. On exit it always leaves the terminal as
-// it was. It returns nil if the game ended with ErrQuit or Ctrl+C.
+// error or the user presses Ctrl+C. If g is a KeyHandler, Run also reads the
+// keyboard and runs the actions of the keys pressed before each Update. On
+// exit it always leaves the terminal as it was. It returns nil if the game
+// ended with ErrQuit or Ctrl+C.
 func Run(g Game) error {
 	width, height, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
@@ -69,7 +76,7 @@ func Run(g Game) error {
 		defer termbox.Close()
 		defer termbox.Interrupt()
 		keyActions = keyHandler.KeyActions()
-		go ReadInput(inputs_channel)
+		go readInput(inputs_channel)
 	}
 
 	last := time.Now()
