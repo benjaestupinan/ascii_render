@@ -43,6 +43,40 @@ func TestKeyNameOfSpecialKeys(t *testing.T) {
 	}
 }
 
+// Function and navigation keys have no ASCII code at all: termbox gives them
+// values near 0xFFFF in Key, and Ch stays at 0.
+func TestKeyNameOfKeysWithoutASCIICode(t *testing.T) {
+	cases := []struct {
+		key  termbox.Key
+		want string
+	}{
+		{termbox.KeyF1, "f1"},
+		{termbox.KeyF2, "f2"},
+		{termbox.KeyF3, "f3"},
+		{termbox.KeyF4, "f4"},
+		{termbox.KeyF5, "f5"},
+		{termbox.KeyF6, "f6"},
+		{termbox.KeyF7, "f7"},
+		{termbox.KeyF8, "f8"},
+		{termbox.KeyF9, "f9"},
+		{termbox.KeyF10, "f10"},
+		{termbox.KeyF11, "f11"},
+		{termbox.KeyF12, "f12"},
+		{termbox.KeyInsert, "insert"},
+		{termbox.KeyDelete, "delete"},
+		{termbox.KeyHome, "home"},
+		{termbox.KeyEnd, "end"},
+		{termbox.KeyPgup, "pgup"},
+		{termbox.KeyPgdn, "pgdn"},
+	}
+	for _, c := range cases {
+		ev := termbox.Event{Type: termbox.EventKey, Key: c.key}
+		if got := keyName(ev); got != c.want {
+			t.Errorf("keyName(Key %#x) = %q, want %q", c.key, got, c.want)
+		}
+	}
+}
+
 // Resizing the terminal or moving the mouse also produces events. They are
 // not keys, so they get no name, and the input loop has to keep going.
 func TestKeyNameOfNonKeyEventsIsEmpty(t *testing.T) {
