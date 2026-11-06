@@ -34,12 +34,15 @@ type KeyHandler interface {
 
 func keyName(ev termbox.Event) string {
 	// fmt.Printf("%+v\n", ev) // usefull to tell "what Key is each key"
-	if ev.Type != 0{
+	if ev.Type != 0 {
 		return ""
 	}
 	switch ev.Key {
 	default:
-		return string(ev.Ch)
+		if ev.Ch != 0 {
+			return string(ev.Ch)
+		}
+		return ""
 	case 3:
 		return "ctrl+c"
 	case 32:
